@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>HousingAnywhere · Virtual tour demo</title>
+<link rel="stylesheet" href="vendor/core/index.css">
+<link rel="stylesheet" href="vendor/markers-plugin/index.css">
+<link rel="stylesheet" href="vendor/virtual-tour-plugin/index.css">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.min.js",
+  "@photo-sphere-viewer/core": "./vendor/core/index.module.js",
+  "@photo-sphere-viewer/markers-plugin": "./vendor/markers-plugin/index.module.js",
+  "@photo-sphere-viewer/virtual-tour-plugin": "./vendor/virtual-tour-plugin/index.module.js"
+} }
+</script>
+</head>
+<body>
+
+<div class="stage">
+  <div class="device">
+    <div class="device-screen">
+      <div id="app" class="app"></div>
+    </div>
+  </div>
+  <p class="stage-note">Mobile prototype — HousingAnywhere virtual tours</p>
+</div>
+
+<!-- hidden file inputs, reused by every room -->
+<input id="file-camera" type="file" accept="image/*" capture="environment" hidden>
+<input id="file-gallery" type="file" accept="image/*" multiple hidden>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
