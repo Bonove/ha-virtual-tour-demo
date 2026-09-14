@@ -570,4 +570,16 @@ function renderRoomNav(currentId) {
 
 /* ---------------------------------------------------------------- boot */
 
+/* On a laptop the phone frame keeps its real 390 x 844 proportions and is scaled
+   down to fit the window, so the layout never differs from a real phone. */
+function fitDevice() {
+  const d = document.querySelector('.device');
+  if (d) {
+    const s = Math.min(1, (window.innerHeight - 84) / 844, (window.innerWidth - 40) / 390);
+    d.style.setProperty('--dev-scale', s.toFixed(3));
+  }
+}
+window.addEventListener('resize', fitDevice);
+fitDevice();
+
 render();

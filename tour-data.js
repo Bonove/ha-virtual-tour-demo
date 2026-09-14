@@ -22,7 +22,7 @@ export const DEMO_NODES = [
     startPosition: at(-85, EYE),
     links: [
       { nodeId: 'kitchen', position: at(-170) },
-      { nodeId: 'bedroom', position: at(150) },
+      { nodeId: 'bedroom', position: at(75) },
     ],
   },
   {
@@ -30,7 +30,7 @@ export const DEMO_NODES = [
     name: 'Kitchen',
     panorama: 'assets/pano/kitchen.jpg',
     thumbnail: 'assets/photos/kitchen-1.jpg',
-    startPosition: at(-160, EYE),
+    startPosition: at(-160, Math.round(H * 0.63)),
     links: [
       { nodeId: 'living', position: at(-20) },
       { nodeId: 'bathroom', position: at(-95) },
@@ -54,8 +54,8 @@ export const DEMO_NODES = [
     thumbnail: 'assets/photos/bathroom-1.jpg',
     startPosition: at(-10, Math.round(H * 0.66)),
     links: [
-      { nodeId: 'kitchen', position: at(80) },
-      { nodeId: 'bedroom', position: at(125) },
+      { nodeId: 'kitchen', position: at(60) },
+      { nodeId: 'bedroom', position: at(130) },
     ],
   },
 ];
