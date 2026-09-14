@@ -8,6 +8,7 @@ import { DEMO_NODES, matchRoomToNode } from './tour-data.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = $('#app');
+const screens = () => $('#screens');
 
 /* ---------------------------------------------------------------- icons */
 
@@ -284,7 +285,6 @@ function screenTour() {
   const tenant = state.tourMode === 'tenant';
   return `
   <section class="screen" id="screen-tour">
-    <div class="viewer" id="viewer"></div>
     <div class="tour-top">
       <button class="iconbtn" data-act="${tenant ? 'toLandlord' : 'exitTour'}" aria-label="Close">${tenant ? I.back : I.close}</button>
       <span class="pill" id="room-label">Loading…</span>
@@ -340,10 +340,12 @@ const SCREENS = {
 };
 
 function render() {
-  const wasTour = !!$('#viewer');
-  app.innerHTML = SCREENS[state.screen]() + lightboxHtml();
-  if (state.screen === 'tour') mountTour(!wasTour);
-  else if (wasTour) destroyTour();
+  const onTour = state.screen === 'tour';
+  screens().innerHTML = SCREENS[state.screen]() + lightboxHtml();
+  $('#viewer-layer').hidden = !onTour;
+  screens().classList.toggle('passthrough', onTour);
+  if (onTour) mountTour();
+  else destroyTour();
   if (state.screen === 'processing') runProcessing();
 }
 
@@ -351,7 +353,7 @@ function toast(msg) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = msg;
-  app.appendChild(el);
+  screens().appendChild(el);
   setTimeout(() => el.remove(), 2800);
 }
 
@@ -486,6 +488,7 @@ function runProcessing() {
 let viewer = null;
 let tourPlugin = null;
 let nodes = [];
+let navBusy = false;   // a node is loading — ignore room taps until it settles
 
 /** Names the demo nodes after the landlord's own rooms where they match. */
 function buildNodes() {
@@ -495,12 +498,17 @@ function buildNodes() {
   });
 }
 
-async function mountTour(fresh) {
+async function mountTour() {
+  if (viewer) {                       // only the chrome around it was re-rendered
+    const current = tourPlugin?.getCurrentNode();
+    if (current) {
+      $('#room-label').textContent = current.name;
+      renderRoomNav(current.id);
+    }
+    return;
+  }
   nodes = buildNodes();
   renderRoomNav(nodes[0].id);
-
-  if (!fresh && viewer) { attachViewer(); return; }
-  destroyTour();
 
   const [{ Viewer }, { VirtualTourPlugin }] = await Promise.all([
     import('@photo-sphere-viewer/core'),
@@ -509,7 +517,7 @@ async function mountTour(fresh) {
   if (state.screen !== 'tour') return;
 
   viewer = new Viewer({
-    container: $('#viewer'),
+    container: $('#viewer-layer'),
     defaultZoomLvl: 15,
     maxFov: 100,
     navbar: false,
@@ -518,6 +526,7 @@ async function mountTour(fresh) {
     loadingTxt: 'Loading your tour…',
     plugins: [[VirtualTourPlugin, {
       positionMode: 'manual',
+      preload: true,
       renderMode: '3d',
       // every room opens on its own best view; the panoramas share no common north
       transitionOptions: (node) => ({ showLoader: true, speed: '25rpm', effect: 'fade', rotation: true, rotateTo: node.startPosition }),
@@ -529,33 +538,29 @@ async function mountTour(fresh) {
 
   tourPlugin = viewer.getPlugin(VirtualTourPlugin);
   tourPlugin.addEventListener('node-changed', ({ node }) => {
+    navBusy = false;
     const label = $('#room-label');
     if (label) label.textContent = node.name;
     renderRoomNav(node.id);
   });
+  navBusy = true;
   tourPlugin.setNodes(nodes, nodes[0].id);
 }
 
-/** Re-parents the existing viewer canvas when switching landlord/tenant chrome. */
-function attachViewer() {
-  const host = $('#viewer');
-  if (host && viewer?.container) {
-    host.appendChild(viewer.container);
-    viewer.parent = host;
-    viewer.autoSize();
-    const label = $('#room-label');
-    const current = tourPlugin?.getCurrentNode();
-    if (label && current) label.textContent = current.name;
-    if (current) renderRoomNav(current.id);
-  }
-}
-
 function destroyTour() {
-  if (viewer) { viewer.destroy(); viewer = null; tourPlugin = null; }
+  if (viewer) { viewer.destroy(); viewer = null; tourPlugin = null; navBusy = false; }
 }
 
+/** Taps during a panorama load can wedge the plugin, so navigation is serialised.
+ *  The timeout is a safety net: a backgrounded tab pauses rAF, which stalls the
+ *  transition, and the demo must not stay stuck when it comes back. */
 function goToNode(id) {
-  tourPlugin?.setCurrentNode(id);
+  if (!tourPlugin || navBusy) return;
+  navBusy = true;
+  const release = setTimeout(() => { navBusy = false; }, 8000);
+  Promise.resolve(tourPlugin.setCurrentNode(id))
+    .catch(() => {})
+    .finally(() => { clearTimeout(release); navBusy = false; });
 }
 
 function renderRoomNav(currentId) {

@@ -79,6 +79,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- screens ---------- */
 
+#viewer-layer { position: absolute; inset: 0; background: #0d1117; }
+#screens { position: absolute; inset: 0; }
+
 .screen {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
@@ -280,8 +283,11 @@ small { font-size: 12.5px; color: var(--muted-foreground); }
 
 /* ---------- tour ---------- */
 
-#screen-tour { background: #0d1117; }
-.viewer { position: absolute; inset: 0; }
+/* The viewer lives in its own layer underneath. While the tour is open the whole
+   screens layer must let drags through — only the chrome itself stays clickable. */
+#screens.passthrough { pointer-events: none; }
+#screen-tour { background: transparent; }
+#screen-tour .tour-bottom, #screen-tour .tour-top > *, .lightbox { pointer-events: auto; }
 .psv-container { background: #0d1117 !important; }
 
 .tour-top {
